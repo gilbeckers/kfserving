@@ -46,6 +46,8 @@ class Storage(object):  # pylint: disable=too-few-public-methods
     @staticmethod
     def download(uri: str, out_dir: str = None) -> str:
         logging.info("Copying contents of %s to local", uri)
+        logging.info("Hello there! ")
+        logging.info(f"out_dir: {out_dir}")
 
         is_local = False
         if uri.startswith(_LOCAL_PREFIX) or os.path.exists(uri):
@@ -79,6 +81,21 @@ class Storage(object):  # pylint: disable=too-few-public-methods
                             (_GCS_PREFIX, _S3_PREFIX, _LOCAL_PREFIX, _HTTP_PREFIX))
 
         logging.info("Successfully copied %s to %s", uri, out_dir)
+
+        # Unpack archived files in out_dir
+        (_, _, filenames) = os.walk(out_dir).next()
+        logging.info(f"filenames in out_dir: {filenames}")
+        for _file in filenames:
+            filename = os.path.splitext(_file)[0]
+            file_extension = os.path.splitext(_file)[1]
+            logger.info(f"filename: {filename}")
+            logger.info(f"file_extension: {file_extension}")
+            if file_extension == 'tgz' and filename.endswith('-model'):
+                logger.info(f"UNPACKING THE MODEL {_file} HERE")
+            else:
+                logger.info(f"SKIPPING {_file}")
+
+
         return out_dir
 
     @staticmethod
@@ -87,9 +104,12 @@ class Storage(object):  # pylint: disable=too-few-public-methods
         parsed = urlparse(uri, scheme='s3')
         bucket_name = parsed.netloc
         bucket_path = parsed.path.lstrip('/')
+        logging.info(f"bucket_name: {bucket_name}")
+        logging.info(f"bucket_path: {bucket_path}")
 
         bucket = s3.Bucket(bucket_name)
         for obj in bucket.objects.filter(Prefix=bucket_path):
+            logging.info(f"obj_key: {obj.key}")
             # Skip where boto3 lists the directory as an object
             if obj.key.endswith("/"):
                 continue
@@ -100,6 +120,8 @@ class Storage(object):  # pylint: disable=too-few-public-methods
                 if bucket_path == obj.key
                 else obj.key.replace(bucket_path, "", 1).lstrip("/")
             )
+            logging.info(f"temp_dir: {temp_dir}")
+            logging.info(f"target_key: {target_key}")
             target = f"{temp_dir}/{target_key}"
             if not os.path.exists(os.path.dirname(target)):
                 os.makedirs(os.path.dirname(target), exist_ok=True)

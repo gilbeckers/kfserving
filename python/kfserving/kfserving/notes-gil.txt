@@ -1,0 +1,5 @@
+docker build -f storage-initializer.Dockerfile -t docker.yq.credo.be/cust/storage-initializer:unpack-model-for-s3-v0 .
+docker push docker.yq.credo.be/cust/storage-initializer:unpack-model-for-s3-v0
+
+Change image of storage-initializer in the inferenceservice-config ConfigMap in the kubeflow ns
+(need to change it in the manifests repo for lab cluster because otherwise argocd will overwrite changes)
